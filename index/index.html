@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<body>
+<script>
+    angular.module('myApp', [])
+        .controller('testCtrl', function ($scope, $http) {
+            $scope.genre = true;
+            $scope.next = '';
+            $scope.previous = '';
+            $scope.nextTrack = '';
+            $scope.previousTrack = '';
+
+//            function to change sections
+            $scope.changeView = function (val) {
+                if (val == 'genre') {
+                    $scope.genre = true;
+                    $scope.sendGet('first');
+                }
+                else if (val == 'track') {
+                    $scope.genre = false;
+                    $scope.sendGetTrack('first');
+                }
+            };
+
+//            function to edit genre
+            $scope.edit = function (id, name) {
+                $http({
+                    method: 'POST',
+                    url: 'http://104.197.128.152:8000/v1/genres/' + id,
+                    data: {name: name}
+                })
+                    .then(function (response) {
+                        alert("something wrong with this api please check it out!! It's not working!!!")
+                        console.log(response);
+                        $scope.sendGet('first');
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+
+//            function to add new genre
+            $scope.add = function (name) {
+                $http({
+                    method: 'POST',
+                    url: 'http://104.197.128.152:8000/v1/genres',
+                    data: name
+                })
+                    .then(function (response) {
+                        alert("New Genre ADDED!")
+                        console.log(response);
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+
+//            function to get genre list
+            $scope.sendGet = function (type) {
+                if (type == 'first')
+                    url = 'http://104.197.128.152:8000/v1/genres';
+                else if (type == 'next')
+                    url = $scope.next;
+                else if (type == 'previous')
+                    url = $scope.previous;
+                $http({
+                    method: 'GET',
+                    url: url
+                })
+                    .then(function (response) {
+                        $scope.list = response.data;
+                        $scope.next = response.data.next;
+                        $scope.previous = response.data.previous;
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+            $scope.sendGet('first');
+
+
+//            function to get track list
+            $scope.sendGetTrack = function (type) {
+                if (type == 'first')
+                    url = 'http://104.197.128.152:8000/v1/tracks';
+                else if (type == 'next')
+                    if ($scope.nextTrack == null)
+                        alert("no more records.")
+                    else
+                        url = $scope.nextTrack;
+                else if (type == 'previous')
+                    url = $scope.previousTrack;
+                $http({
+                    method: 'GET',
+                    url: url
+                })
+                    .then(function (response) {
+                        $scope.trackList = response.data;
+                        $scope.nextTrack = response.data.next;
+                        $scope.previousTrack = response.data.previous;
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+
+
+//            function to add new track
+            $scope.addTrack = function (track) {
+                $http({
+                    method: 'POST',
+                    url: 'http://104.197.128.152:8000/v1/tracks',
+                    data: track
+                })
+                    .then(function (response) {
+                        alert("New Track ADDED!")
+                        console.log(response);
+                    }, function (error) {
+                        console.log(error);
+                    });
+            };
+        });
+
+</script>
+
+<div ng-app="myApp" ng-controller="testCtrl">
+    <button ng-click="changeView('genre');">Genre</button>
+    <button ng-click="changeView('track');">Tracks</button>
+
+    <section ng-show="genre">
+        <input type="name" placeholder="Enter Genre name" ng-model="genreName.name">
+        <button ng-click="add(genreName)">Add Genre</button>
+        <br>
+
+        <input type="search" ng-model="searchParam" placeholder="Type name to search..">
+
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="genre in list.results | filter : searchParam">
+                <td contenteditable="" ng-model="genre.name">{{genre.name}}</td>
+                <td>
+                    <button ng-click="edit(genre.id,genre.name)">Save Changes</button>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+        <button ng-click="sendGet('previous')">Previous</button>
+        <button ng-click="sendGet('next')">Next</button>
+
+
+    </section>
+    <section ng-hide="genre">
+        <input type="rating" placeholder="Enter Track rating" ng-model="trackName.rating">
+        <button ng-click="addTrack(trackName)">Add Track</button>
+        <br>
+
+        <input type="search" ng-model="searchTrack" placeholder="Type track to search..">
+
+        <table>
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>Rating</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="track in trackList.results | filter : searchTrack">
+                <td ng-model="track.name">{{track.title}}</td>
+                <td ng-model="track.rating">{{track.rating}}</td>
+            </tr>
+
+            </tbody>
+        </table>
+        <button ng-click="sendGetTrack('previous')">Previous</button>
+        <button ng-click="sendGetTrack('next')">Next</button>
+
+
+    </section>
+</div>
+
+</body>
+</html>
